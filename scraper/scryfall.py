@@ -30,6 +30,8 @@ async def get_card(card_name: str) -> dict | None:
         response.raise_for_status()
         data = response.json()
 
+        eur = data.get("prices", {}).get("eur")
+
         return {
             "name": data["name"],
             "oracle_id": data["oracle_id"],
@@ -39,7 +41,7 @@ async def get_card(card_name: str) -> dict | None:
             "rarity": data["rarity"],
             "is_foil": data.get("foil", False) and not data.get("nonfoil", False),
             "image_url": data.get("image_uris", {}).get("normal"),
-            "price_eur": data.get("prices", {}).get("eur"),
+            "price_eur": float(eur) if eur is not None else None,
             "prints_search_uri": data["prints_search_uri"]
         }
 
@@ -65,6 +67,8 @@ async def get_all_printings(oracle_id: str) -> list[dict]:
 
         printings = []
         for card in data.get("data", []):
+            eur = card.get("prices", {}).get("eur")
+
             printings.append({
                 "name": card["name"],
                 "set_code": card["set"],
@@ -73,7 +77,7 @@ async def get_all_printings(oracle_id: str) -> list[dict]:
                 "rarity": card["rarity"],
                 "nonfoil": card.get("nonfoil", False),
                 "foil": card.get("foil", False),
-                "price_eur": card.get("prices", {}).get("eur"),
+                "price_eur": float(eur) if eur is not None else None,
                 "image_url": card.get("image_uris", {}).get("normal")
             })
 
