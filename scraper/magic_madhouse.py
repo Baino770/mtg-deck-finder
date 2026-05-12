@@ -5,6 +5,7 @@ from playwright.async_api import async_playwright
 async def search_card(card_name: str) -> list[dict]:
     """
     Searches Magic Madhouse for a card and returns available listings.
+    Magic Madhouse uses Klevu for search, which loads results dynamically via JavaScript, so we use Playwright to scrape.
     """
     results = []
     url = f"https://magicmadhouse.co.uk/search.php?search_query={card_name.replace(' ', '%20')}"
