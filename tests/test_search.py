@@ -132,3 +132,69 @@ async def test_find_card_prices_filters_irrelevant_results(mocker):
         name.startswith("Emeritus") for name in card_names
     )
     assert len(result["results"]) == 1
+    
+
+@pytest.mark.asyncio
+async def test_find_card_prices_combines_vendor_results(mocker):
+    """Results from multiple vendors should be combined and sorted."""
+    mocker.patch("scraper.search.get_card", return_value={
+        "name": "Lightning Bolt",
+        "oracle_id": "4457ed35",
+        "set_name": "Ravnica: Clue Edition"
+    })
+    mocker.patch("scraper.search.magic_madhouse_search", return_value=[
+        {
+            "vendor": "Magic Madhouse",
+            "card_name": "Lightning Bolt",
+            "price_gbp": 2.99,
+            "in_stock": True,
+            "url": "https://magicmadhouse.co.uk/a"
+        }
+    ])
+    mocker.patch("scraper.search.troll_trader_search", return_value=[
+        {
+            "vendor": "Troll Trader",
+            "card_name": "Lightning Bolt (NM-Mint, English,1 In Stock)",
+            "price_gbp": 1.87,
+            "in_stock": True,
+            "url": "https://trolltradercards.com/a"
+        }
+    ])
+
+    result = await find_card_prices("Lightning Bolt")
+
+    assert len(result["results"]) == 2
+
+    for r in result["results"]:
+        if r["vendor"] == "Magic Madhouse":
+            assert r["price_gbp"] == 2.99
+        elif r["vendor"] == "Troll Trader":
+            assert r["price_gbp"] == 1.87
+
+
+@pytest.mark.asyncio
+async def test_find_card_prices_handles_vendor_failure(mocker):
+    """If one vendor fails the other results should still be returned."""
+    mocker.patch("scraper.search.get_card", return_value={
+        "name": "Lightning Bolt",
+        "oracle_id": "4457ed35",
+        "set_name": "Ravnica: Clue Edition"
+    })
+    mocker.patch(
+        "scraper.search.magic_madhouse_search",
+        side_effect=Exception("Scraper failed")
+    )
+    mocker.patch("scraper.search.troll_trader_search", return_value=[
+        {
+            "vendor": "Troll Trader",
+            "card_name": "Lightning Bolt (NM-Mint, English,1 In Stock)",
+            "price_gbp": 1.87,
+            "in_stock": True,
+            "url": "https://trolltradercards.com/a"
+        }
+    ])
+
+    result = await find_card_prices("Lightning Bolt")
+
+    assert len(result["results"]) == 1
+    assert result["results"][0]["vendor"] == "Troll Trader"
