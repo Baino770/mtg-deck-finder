@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock
-from scraper.search import is_relevant_result, find_card_prices
+from data.offer import Offer
+from scraper.search import SCRAPER_REGISTRY, is_relevant_result, find_card_prices
 
 
 # --- Pure logic tests (no mocking needed) ---
@@ -62,29 +63,35 @@ async def test_find_card_prices_sorts_by_price(mocker):
         "oracle_id": "4457ed35",
         "set_name": "Ravnica: Clue Edition"
     })
-    mocker.patch("scraper.search.search_card", return_value=[
-        {
-            "vendor": "Magic Madhouse",
-            "card_name": "Lightning Bolt (Foil)",
-            "price_gbp": 9.99,
-            "in_stock": True,
-            "url": "https://magicmadhouse.co.uk/a"
-        },
-        {
-            "vendor": "Magic Madhouse",
-            "card_name": "Lightning Bolt",
-            "price_gbp": 2.49,
-            "in_stock": True,
-            "url": "https://magicmadhouse.co.uk/b"
-        },
-        {
-            "vendor": "Magic Madhouse",
-            "card_name": "Lightning Bolt (MagicFest)",
-            "price_gbp": 2.99,
-            "in_stock": True,
-            "url": "https://magicmadhouse.co.uk/c"
-        }
-    ])
+    mocker.patch.object(
+        SCRAPER_REGISTRY,
+        "scrape_all",
+        AsyncMock(return_value=[
+            [
+                Offer(
+                    card_name="Lightning Bolt (Foil)",
+                    price=9.99,
+                    vendor="Magic Madhouse",
+                    url="https://magicmadhouse.co.uk/a",
+                    in_stock=True
+                ),
+                Offer(
+                    card_name="Lightning Bolt",
+                    price=2.49,
+                    vendor="Magic Madhouse",
+                    url="https://magicmadhouse.co.uk/b",
+                    in_stock=True
+                ),
+                Offer(
+                    card_name="Lightning Bolt (MagicFest)",
+                    price=2.99,
+                    vendor="Magic Madhouse",
+                    url="https://magicmadhouse.co.uk/c",
+                    in_stock=True
+                )
+            ]
+        ])
+    )
 
     result = await find_card_prices("Lightning Bolt")
     prices = [r["price_gbp"] for r in result["results"]]
@@ -100,29 +107,36 @@ async def test_find_card_prices_filters_irrelevant_results(mocker):
         "oracle_id": "4457ed35",
         "set_name": "Ravnica: Clue Edition"
     })
-    mocker.patch("scraper.search.search_card", return_value=[
-        {
-            "vendor": "Magic Madhouse",
-            "card_name": "Lightning Bolt",
-            "price_gbp": 2.49,
-            "in_stock": True,
-            "url": "https://magicmadhouse.co.uk/a"
-        },
-        {
-            "vendor": "Magic Madhouse",
-            "card_name": "SV Black Bolt 031/086 Eelektrik",
-            "price_gbp": 1.95,
-            "in_stock": True,
-            "url": "https://magicmadhouse.co.uk/b"
-        },
-        {
-            "vendor": "Magic Madhouse",
-            "card_name": "Emeritus of Conflict // Lightning Bolt",
-            "price_gbp": 14.99,
-            "in_stock": False,
-            "url": "https://magicmadhouse.co.uk/c"
-        }
-    ])
+    mocker.patch.object(
+        SCRAPER_REGISTRY,
+        "scrape_all",
+        AsyncMock(return_value=[
+            [
+                Offer(
+                    card_name="Lightning Bolt",
+                    price=2.49,
+                    vendor="Magic Madhouse",
+                    url="https://magicmadhouse.co.uk/a",
+                    in_stock=True
+                ),
+                Offer(
+                    card_name="SV Black Bolt 031/086 Eelektrik",
+                    price=1.95,
+                    vendor="Magic Madhouse",
+                    url="https://magicmadhouse.co.uk/b",
+                    in_stock=True
+                ),
+                Offer(
+                    card_name="Emeritus of Conflict // Lightning Bolt",
+                    price=14.99,
+                    vendor="Magic Madhouse",
+                    url="https://magicmadhouse.co.uk/c",
+                    in_stock=False
+                )
+            ],
+            []
+        ])
+    )
 
     result = await find_card_prices("Lightning Bolt")
     card_names = [r["card_name"] for r in result["results"]]
@@ -142,24 +156,30 @@ async def test_find_card_prices_combines_vendor_results(mocker):
         "oracle_id": "4457ed35",
         "set_name": "Ravnica: Clue Edition"
     })
-    mocker.patch("scraper.search.magic_madhouse_search", return_value=[
-        {
-            "vendor": "Magic Madhouse",
-            "card_name": "Lightning Bolt",
-            "price_gbp": 2.99,
-            "in_stock": True,
-            "url": "https://magicmadhouse.co.uk/a"
-        }
-    ])
-    mocker.patch("scraper.search.troll_trader_search", return_value=[
-        {
-            "vendor": "Troll Trader",
-            "card_name": "Lightning Bolt (NM-Mint, English,1 In Stock)",
-            "price_gbp": 1.87,
-            "in_stock": True,
-            "url": "https://trolltradercards.com/a"
-        }
-    ])
+    mocker.patch.object(
+        SCRAPER_REGISTRY,
+        "scrape_all",
+        AsyncMock(return_value=[
+            [
+                Offer(
+                    card_name="Lightning Bolt",
+                    price=2.99,
+                    vendor="Magic Madhouse",
+                    url="https://magicmadhouse.co.uk/a",
+                    in_stock=True
+                )
+            ],
+            [
+                Offer(
+                    card_name="Lightning Bolt (NM-Mint, English,1 In Stock)",
+                    price=1.87,
+                    vendor="Troll Trader",
+                    url="https://trolltradercards.com/a",
+                    in_stock=True
+                )
+            ]
+        ])
+    )
 
     result = await find_card_prices("Lightning Bolt")
 
@@ -180,19 +200,22 @@ async def test_find_card_prices_handles_vendor_failure(mocker):
         "oracle_id": "4457ed35",
         "set_name": "Ravnica: Clue Edition"
     })
-    mocker.patch(
-        "scraper.search.magic_madhouse_search",
-        side_effect=Exception("Scraper failed")
+    mocker.patch.object(
+        SCRAPER_REGISTRY,
+        "scrape_all",
+        AsyncMock(return_value=[
+            Exception("Scraper failed"),
+            [
+                Offer(
+                    card_name="Lightning Bolt (NM-Mint, English,1 In Stock)",
+                    price=1.87,
+                    vendor="Troll Trader",
+                    url="https://trolltradercards.com/a",
+                    in_stock=True
+                )
+            ]
+        ])
     )
-    mocker.patch("scraper.search.troll_trader_search", return_value=[
-        {
-            "vendor": "Troll Trader",
-            "card_name": "Lightning Bolt (NM-Mint, English,1 In Stock)",
-            "price_gbp": 1.87,
-            "in_stock": True,
-            "url": "https://trolltradercards.com/a"
-        }
-    ])
 
     result = await find_card_prices("Lightning Bolt")
 

@@ -5,7 +5,7 @@ class Offer:
     """Class representing an offer for a card from a vendor."""
 
     card_name: str
-    price: float
+    price_gbp: float
     vendor: str
     url: str
     in_stock: bool

@@ -1,7 +1,10 @@
 import asyncio
-from scraper.scryfall import get_card
-from scraper.magic_madhouse import search_card as magic_madhouse_search
-from scraper.troll_trader import search_card as troll_trader_search
+
+from scraper.scraper_registry import ScraperRegistry
+from scraper.scryfall import get_card as scryfall_get_card
+from scraper.magic_madhouse import MagicMadhouseScraper
+from scraper.troll_trader import TrollTraderScraper
+from scraper.chaos_cards import ChaosCardsScraper
 
 
 def is_relevant_result(result: dict, canonical_name: str) -> bool:
@@ -14,45 +17,50 @@ def is_relevant_result(result: dict, canonical_name: str) -> bool:
     return result_name.startswith(canonical)
 
 
+SCRAPER_REGISTRY = ScraperRegistry()
+SCRAPER_REGISTRY.register(MagicMadhouseScraper())
+SCRAPER_REGISTRY.register(TrollTraderScraper())
+# Chaos Cards scraper is currently disabled due to their site's anti-bot measures. Uncomment the line below to enable it if you have a solution for bypassing those measures.
+# SCRAPER_REGISTRY.register(ChaosCardsScraper())
+
+
+def _convert_offer_to_result(offer) -> dict:
+    return {
+        "vendor": offer.vendor,
+        "card_name": offer.card_name,
+        "price_gbp": offer.price_gbp,
+        "in_stock": offer.in_stock,
+        "url": offer.url
+    }
+
+
 async def search_all_vendors(card_name: str) -> list[dict]:
-    """
-    Searches all vendors in parallel for a given card name.
-    Returns combined raw results.
-    """
+    """Searches all registered vendor scrapers in parallel and returns combined results."""
+    
     print(f"  Searching all vendors for '{card_name}'...")
 
-    # Run all vendor scrapers concurrently
-    results = await asyncio.gather(
-        magic_madhouse_search(card_name),
-        troll_trader_search(card_name),
-        return_exceptions=True
-    )
+    results = await SCRAPER_REGISTRY.scrape_all(card_name)
 
     combined = []
-    vendor_names = ["Magic Madhouse", "Troll Trader"]
+    for scraper, vendor_results in zip(SCRAPER_REGISTRY._scrapers, results):
+        vendor_name = scraper.__class__.__name__
 
-    for vendor_name, vendor_results in zip(vendor_names, results):
         if isinstance(vendor_results, Exception):
-            print(f"  Warning: {vendor_name} scraper failed: "
-                  f"{vendor_results}")
-        else:
-            combined.extend(vendor_results)
-            print(f"  {vendor_name}: {len(vendor_results)} results")
+            print(f"  Warning: {vendor_name} scraper failed: {vendor_results}")
+            continue
+
+        converted = [_convert_offer_to_result(offer) for offer in vendor_results]
+        combined.extend(converted)
+        print(f"  {vendor_name}: {len(converted)} results")
 
     return combined
 
 
 async def find_card_prices(card_name: str) -> dict:
-    """
-    Main search function. Given a card name:
-    1. Looks up canonical data from Scryfall
-    2. Searches all vendors in parallel
-    3. Filters and returns relevant results
-    """
-
-    # Step 1: Get canonical card data from Scryfall
+    """Looks up canonical card data, searches vendors, and returns filtered results."""
+    
     print(f"Looking up '{card_name}' on Scryfall...")
-    card = await get_card(card_name)
+    card = await scryfall_get_card(card_name)
 
     if card is None:
         return {
@@ -63,19 +71,15 @@ async def find_card_prices(card_name: str) -> dict:
     canonical_name = card["name"]
     print(f"Found: {canonical_name} ({card['set_name']})")
 
-    # Step 2: Search all vendors in parallel
     raw_results = await search_all_vendors(canonical_name)
     print(f"Total raw results: {len(raw_results)}")
 
-    # Step 3: Filter to relevant results only
     filtered_results = [
         r for r in raw_results
         if is_relevant_result(r, canonical_name)
     ]
 
-    # Step 4: Sort by price ascending
     filtered_results.sort(key=lambda r: r["price_gbp"])
-
     print(f"Filtered to {len(filtered_results)} relevant results")
 
     return {
@@ -84,14 +88,12 @@ async def find_card_prices(card_name: str) -> dict:
     }
 
 
-# Test it
 if __name__ == "__main__":
     async def main():
         output = await find_card_prices("Lightning Bolt")
 
         print(f"\n=== Results for {output['card']['name']} ===")
         for r in output["results"]:
-            print(f"  £{r['price_gbp']:.2f} - "
-                  f"[{r['vendor']}] {r['card_name']}")
+            print(f"  £{r['price_gbp']:.2f} - [{r['vendor']}] {r['card_name']}")
 
     asyncio.run(main())

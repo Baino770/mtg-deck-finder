@@ -1,5 +1,5 @@
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import httpx
 from bs4 import BeautifulSoup
 
@@ -10,13 +10,11 @@ class TrollTraderScraperConfig:
     """Configuration for Troll Trader scraper."""
     
     BASE_URL: str = "https://www.trolltradercards.com"
-    HEADERS: dict[str, str] = {
-        "User-Agent": (
-            "MTGDeckFinder/0.1 "
-            "(samuel.bainbridge@ntlworld.com)"
-        )
-        }
+    HEADERS: dict[str, str] = field(default_factory=lambda: {
+        "User-Agent": "MTGDeckFinder/0.1 (samuel.bainbridge@ntlworld.com)"
+    })
     MAX_PAGES: int = 10  # Limit to first 10 pages to avoid long runtimes
+    TIMEOUT: int = 15  # Timeout for HTTP requests in seconds
 
 
 class TrollTraderScraper(WebScraper):
@@ -40,7 +38,7 @@ class TrollTraderScraper(WebScraper):
                 print(f"  Fetching page {page}...")
 
                 try:
-                    response = await client.get(url, timeout=15)
+                    response = await client.get(url, timeout=self.CONFIG.TIMEOUT)
                     response.raise_for_status()
                 except httpx.RemoteProtocolError:
                     print(f"  Server disconnected on page {page}, stopping.")
