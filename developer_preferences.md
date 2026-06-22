@@ -7,7 +7,7 @@
 
 - Use docstrings for all public modules, classes, and functions.
 - Use triple-double-quoted strings `"""..."""`.
-- Start with a one-line summary.
+- Start with a one-line summary which starts on a new line after the first set of quotation marks.
 - Follow with a blank line before details.
 
 ### Function/method docstrings

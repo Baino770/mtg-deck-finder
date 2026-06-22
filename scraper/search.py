@@ -1,3 +1,10 @@
+"""
+Search orchestration helpers for vendor scrapers.
+
+This module provides functions that lookup canonical card data via Scryfall
+and then query all registered vendor scrapers for available offers.
+"""
+
 import asyncio
 
 from scraper.scraper_registry import ScraperRegistry
@@ -9,8 +16,15 @@ from scraper.chaos_cards import ChaosCardsScraper
 
 def is_relevant_result(result: dict, canonical_name: str) -> bool:
     """
-    Filters vendor results to only include listings that match
-    the canonical card name from Scryfall.
+    Return whether a vendor result corresponds to the canonical card name.
+
+    Args:
+        result: A vendor result mapping containing at least the key ``card_name``.
+        canonical_name: The canonical card name from Scryfall to match against.
+
+    Returns:
+        True if the vendor result's `card_name` starts with the canonical name
+        (case-insensitive), otherwise False.
     """
     result_name = result["card_name"].lower()
     canonical = canonical_name.lower()
@@ -25,6 +39,16 @@ SCRAPER_REGISTRY.register(TrollTraderScraper())
 
 
 def _convert_offer_to_result(offer) -> dict:
+    """
+    Convert an `Offer` object into a simple result dictionary.
+
+    Args:
+        offer: An `Offer` instance (from `data.offer`).
+
+    Returns:
+        A dictionary suitable for presentation or further filtering with keys
+        ``vendor``, ``card_name``, ``price_gbp``, ``in_stock`` and ``url``.
+    """
     return {
         "vendor": offer.vendor,
         "card_name": offer.card_name,
@@ -35,8 +59,15 @@ def _convert_offer_to_result(offer) -> dict:
 
 
 async def search_all_vendors(card_name: str) -> list[dict]:
-    """Searches all registered vendor scrapers in parallel and returns combined results."""
-    
+    """Search all registered vendor scrapers concurrently.
+
+    Args:
+        card_name: The canonical card name to search for on vendor sites.
+
+    Returns:
+        A flat list of vendor result dictionaries produced by registered scrapers.
+    """
+
     print(f"  Searching all vendors for '{card_name}'...")
 
     results = await SCRAPER_REGISTRY.scrape_all(card_name)
@@ -57,8 +88,20 @@ async def search_all_vendors(card_name: str) -> list[dict]:
 
 
 async def find_card_prices(card_name: str) -> dict:
-    """Looks up canonical card data, searches vendors, and returns filtered results."""
-    
+    """Lookup canonical card data on Scryfall then query all vendors.
+
+    Args:
+        card_name: The user-supplied card name (may be fuzzy/misspelled).
+
+    Returns:
+        A dictionary with keys:
+        - ``card``: canonical card metadata from Scryfall or ``None`` when not found.
+        - ``results``: list of filtered vendor result dictionaries.
+
+        If the card is not found the ``card`` value will be ``None`` and an
+        ``error`` key will be present with an explanatory message.
+    """
+
     print(f"Looking up '{card_name}' on Scryfall...")
     card = await scryfall_get_card(card_name)
 

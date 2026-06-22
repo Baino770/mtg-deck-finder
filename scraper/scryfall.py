@@ -13,9 +13,19 @@ HEADERS = {
 
 async def get_card(card_name: str) -> dict | None:
     """
-    Fetches canonical card data from Scryfall by name.
+    Fetch canonical card data from Scryfall by name.
+
     Uses fuzzy matching so minor typos still work.
-    Returns None if card not found.
+
+    Args:
+        card_name: The card name to lookup using Scryfall's fuzzy matching.
+
+    Returns:
+        A mapping with canonical card metadata (including `name` and
+        `oracle_id`) or ``None`` when the card could not be found.
+
+    Raises:
+        httpx.HTTPError: If the underlying HTTP request fails unexpectedly.
     """
     async with httpx.AsyncClient() as client:
         response = await client.get(
@@ -48,8 +58,17 @@ async def get_card(card_name: str) -> dict | None:
 
 async def get_all_printings(oracle_id: str) -> list[dict]:
     """
-    Returns every printing of a card using its oracle_id.
-    Useful for letting the user pick which version they want.
+    Return every printing of a card using its oracle_id.
+
+    Args:
+        oracle_id: The Scryfall `oracle_id` for the card.
+
+    Returns:
+        A list of mappings describing each printing (set, collector number,
+        price and image url).
+
+    Raises:
+        httpx.HTTPError: If the underlying HTTP request fails unexpectedly.
     """
     async with httpx.AsyncClient() as client:
         response = await client.get(

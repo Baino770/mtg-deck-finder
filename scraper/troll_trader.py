@@ -18,13 +18,28 @@ class TrollTraderScraperConfig:
 
 
 class TrollTraderScraper(WebScraper):
-    """Scraper for Troll Trader website. Uses httpx and BeautifulSoup to scrape static HTML content."""
+    """
+    Scraper for the Troll Trader website.
+
+    Uses `httpx` for HTTP requests and BeautifulSoup for HTML parsing. The
+    scraper is conservative with pagination to avoid long runtimes.
+    """
     CONFIG = TrollTraderScraperConfig()
 
     async def search_card(self, card_name: str) -> list[dict]:
         """
-        Searches Troll Trader for a card across all pages.
-        Returns all in-stock listings.
+        Search Troll Trader for a card across multiple result pages.
+
+        Args:
+            card_name: The card name to search for.
+
+        Returns:
+            A list of dictionaries representing in-stock listings. Each entry
+            contains keys: ``vendor``, ``card_name``, ``price_gbp``, ``in_stock``,
+            and ``url``.
+
+        Raises:
+            httpx.HTTPError: For network-related errors not explicitly handled.
         """
         results = []
         page = 1
@@ -68,10 +83,21 @@ class TrollTraderScraper(WebScraper):
         return results    
     
     def __parse_page(self, html: str) -> list[dict]:
-        """Parse product listings from a single page of HTML.
-        TO NOTE: A 1 second delay between requests is recommended to avoid rate limiting. This is very slow
-        performance optimisation needs to be performed. Celery could help here. The number of pages searched
-        is limited to 10 to avoid long runtimes.
+        """
+        Parse product listings from a single page of HTML.
+
+        Args:
+            html: The HTML markup for a single search results page.
+
+        Returns:
+            A list of dictionaries where each dictionary represents a single
+            in-stock listing with keys matching the public result schema used
+            across scrapers.
+
+        Notes:
+            A 1 second delay between requests is recommended to avoid rate
+            limiting. The number of pages searched is limited to 10 by
+            configuration to avoid long runtimes.
         """
         soup = BeautifulSoup(html, "html.parser")
         results = []

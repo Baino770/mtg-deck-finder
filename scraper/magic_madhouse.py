@@ -4,13 +4,28 @@ from playwright.async_api import async_playwright
 from scraper.web_scraper import WebScraper
 
 class MagicMadhouseScraper(WebScraper):
-    """Scraper for Magic Madhouse website. Uses Playwright to handle dynamic content loaded by Klevu."""
+    """Scraper for the Magic Madhouse website.
+
+    This scraper uses Playwright to render JavaScript-driven search results (Klevu)
+    and extract product listings.
+    """
 
 
     async def search_card(self, card_name: str) -> list[dict]:
         """
-        Searches Magic Madhouse for a card and returns available listings.
-        Magic Madhouse uses Klevu for search, which loads results dynamically via JavaScript, so we use Playwright to scrape.
+        Search Magic Madhouse for a card and return raw result mappings.
+
+        Args:
+            card_name: The card name to search for.
+
+        Returns:
+            A list of dictionaries where each dictionary includes keys:
+            ``vendor``, ``card_name``, ``price_gbp``, ``in_stock`` and ``url``.
+
+        Raises:
+            playwright.async_api.PlaywrightError: If Playwright fails to launch or
+                navigate. Parsing errors for individual elements are handled
+                gracefully and skipped.
         """
         results = []
         url = f"https://magicmadhouse.co.uk/search.php?search_query={card_name.replace(' ', '%20')}"
