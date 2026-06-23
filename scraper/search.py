@@ -11,7 +11,6 @@ from scraper.scraper_registry import ScraperRegistry
 from scraper.scryfall import get_card as scryfall_get_card
 from scraper.magic_madhouse import MagicMadhouseScraper
 from scraper.troll_trader import TrollTraderScraper
-from scraper.chaos_cards import ChaosCardsScraper
 
 
 def is_relevant_result(result: dict, canonical_name: str) -> bool:
