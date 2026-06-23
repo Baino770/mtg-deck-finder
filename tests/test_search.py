@@ -45,7 +45,7 @@ def test_is_relevant_result_case_insensitive():
 async def test_find_card_prices_returns_error_for_unknown_card(mocker):
     """find_card_prices should return an error dict for unknown cards."""
     mocker.patch(
-        "scraper.search.get_card",
+        "scraper.search.scryfall_get_card",
         return_value=None
     )
 
@@ -58,7 +58,7 @@ async def test_find_card_prices_returns_error_for_unknown_card(mocker):
 @pytest.mark.asyncio
 async def test_find_card_prices_sorts_by_price(mocker):
     """Results should be sorted by price ascending."""
-    mocker.patch("scraper.search.get_card", return_value={
+    mocker.patch("scraper.search.scryfall_get_card", return_value={
         "name": "Lightning Bolt",
         "oracle_id": "4457ed35",
         "set_name": "Ravnica: Clue Edition"
@@ -70,21 +70,21 @@ async def test_find_card_prices_sorts_by_price(mocker):
             [
                 Offer(
                     card_name="Lightning Bolt (Foil)",
-                    price=9.99,
+                    price_gbp=9.99,
                     vendor="Magic Madhouse",
                     url="https://magicmadhouse.co.uk/a",
                     in_stock=True
                 ),
                 Offer(
                     card_name="Lightning Bolt",
-                    price=2.49,
+                    price_gbp=2.49,
                     vendor="Magic Madhouse",
                     url="https://magicmadhouse.co.uk/b",
                     in_stock=True
                 ),
                 Offer(
                     card_name="Lightning Bolt (MagicFest)",
-                    price=2.99,
+                    price_gbp=2.99,
                     vendor="Magic Madhouse",
                     url="https://magicmadhouse.co.uk/c",
                     in_stock=True
@@ -102,7 +102,7 @@ async def test_find_card_prices_sorts_by_price(mocker):
 @pytest.mark.asyncio
 async def test_find_card_prices_filters_irrelevant_results(mocker):
     """Pokemon cards and double faced cards should be filtered out."""
-    mocker.patch("scraper.search.get_card", return_value={
+    mocker.patch("scraper.search.scryfall_get_card", return_value={
         "name": "Lightning Bolt",
         "oracle_id": "4457ed35",
         "set_name": "Ravnica: Clue Edition"
@@ -114,21 +114,21 @@ async def test_find_card_prices_filters_irrelevant_results(mocker):
             [
                 Offer(
                     card_name="Lightning Bolt",
-                    price=2.49,
+                    price_gbp=2.49,
                     vendor="Magic Madhouse",
                     url="https://magicmadhouse.co.uk/a",
                     in_stock=True
                 ),
                 Offer(
                     card_name="SV Black Bolt 031/086 Eelektrik",
-                    price=1.95,
+                    price_gbp=1.95,
                     vendor="Magic Madhouse",
                     url="https://magicmadhouse.co.uk/b",
                     in_stock=True
                 ),
                 Offer(
                     card_name="Emeritus of Conflict // Lightning Bolt",
-                    price=14.99,
+                    price_gbp=14.99,
                     vendor="Magic Madhouse",
                     url="https://magicmadhouse.co.uk/c",
                     in_stock=False
@@ -151,7 +151,7 @@ async def test_find_card_prices_filters_irrelevant_results(mocker):
 @pytest.mark.asyncio
 async def test_find_card_prices_combines_vendor_results(mocker):
     """Results from multiple vendors should be combined and sorted."""
-    mocker.patch("scraper.search.get_card", return_value={
+    mocker.patch("scraper.search.scryfall_get_card", return_value={
         "name": "Lightning Bolt",
         "oracle_id": "4457ed35",
         "set_name": "Ravnica: Clue Edition"
@@ -163,7 +163,7 @@ async def test_find_card_prices_combines_vendor_results(mocker):
             [
                 Offer(
                     card_name="Lightning Bolt",
-                    price=2.99,
+                    price_gbp=2.99,
                     vendor="Magic Madhouse",
                     url="https://magicmadhouse.co.uk/a",
                     in_stock=True
@@ -172,7 +172,7 @@ async def test_find_card_prices_combines_vendor_results(mocker):
             [
                 Offer(
                     card_name="Lightning Bolt (NM-Mint, English,1 In Stock)",
-                    price=1.87,
+                    price_gbp=1.87,
                     vendor="Troll Trader",
                     url="https://trolltradercards.com/a",
                     in_stock=True
@@ -195,7 +195,7 @@ async def test_find_card_prices_combines_vendor_results(mocker):
 @pytest.mark.asyncio
 async def test_find_card_prices_handles_vendor_failure(mocker):
     """If one vendor fails the other results should still be returned."""
-    mocker.patch("scraper.search.get_card", return_value={
+    mocker.patch("scraper.search.scryfall_get_card", return_value={
         "name": "Lightning Bolt",
         "oracle_id": "4457ed35",
         "set_name": "Ravnica: Clue Edition"
@@ -208,7 +208,7 @@ async def test_find_card_prices_handles_vendor_failure(mocker):
             [
                 Offer(
                     card_name="Lightning Bolt (NM-Mint, English,1 In Stock)",
-                    price=1.87,
+                    price_gbp=1.87,
                     vendor="Troll Trader",
                     url="https://trolltradercards.com/a",
                     in_stock=True
