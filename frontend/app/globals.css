@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+:root {
+  /* Canvas - constant regardless of active guild theme */
+  --canvas-bg: #161513;
+  --canvas-surface: #1d1c1a;
+  --canvas-text: #e8e0d8;
+  --canvas-muted: rgba(232, 224, 216, 0.45);
+  --canvas-border: rgba(232, 224, 216, 0.1);
+
+  /* Guild accent colours - overwritten at runtime by GuildThemeProvider */
+  --guild-c1: #c0392b;
+  --guild-c2: #4a4742;
+
+  /*
+   * Font fallbacks for the sandbox build (no internet access to
+   * Google Fonts here). Once running locally with next/font/google,
+   * these get overridden by the generated --font-inter / --font-bebas
+   * variables automatically - no change needed here.
+   */
+  --font-inter: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-bebas: Impact, "Arial Narrow", sans-serif;
+}
+
+@theme inline {
+  --color-canvas-bg: var(--canvas-bg);
+  --color-canvas-surface: var(--canvas-surface);
+  --color-canvas-text: var(--canvas-text);
+  --color-canvas-muted: var(--canvas-muted);
+  --color-canvas-border: var(--canvas-border);
+  --color-guild-c1: var(--guild-c1);
+  --color-guild-c2: var(--guild-c2);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-bebas);
+}
+
+body {
+  background: var(--canvas-bg);
+  color: var(--canvas-text);
+  font-family: var(--font-sans);
+}
+
+/* Transition flash overlay shown briefly while the guild theme switches */
+.theme-flash {
+  position: fixed;
+  inset: 0;
+  background: #0a0a09;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 0.35s ease;
+}
+
+.theme-flash.is-active {
+  opacity: 1;
+}
