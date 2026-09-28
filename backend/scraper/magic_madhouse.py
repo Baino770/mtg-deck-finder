@@ -78,6 +78,7 @@ class MagicMadhouseScraper(WebScraper):
                         "card_name": name.strip(),
                         "price_gbp": price_gbp,
                         "in_stock": in_stock,
+                        "available_quantity": None,
                         "url": href
                     })
 

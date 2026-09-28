@@ -9,3 +9,4 @@ class Offer:
     vendor: str
     url: str
     in_stock: bool
+    available_quantity: int | None = None

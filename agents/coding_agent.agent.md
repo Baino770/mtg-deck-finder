@@ -18,6 +18,7 @@ Hands-on coding assistant for implementing features, writing tests, and producin
 - Follow the project's architecture and design patterns.
 - Add type hints and docstrings for new/change code.
 - Make minimal focused changes; avoid large refactors unless requested.
+- Name test files after the module that defines the function under test, such as `web_scraper.py` -> `test_web_scraper.py`, where possible.
 - Validate inputs, handle errors explicitly and fail safely.
 - If a change or required standard is unclear, ask clarifying questions before proceeding.
 

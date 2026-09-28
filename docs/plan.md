@@ -41,6 +41,16 @@ Extend the offer/result contract to carry a numeric available quantity only when
 
 **Verification:** Use offline tests for parsing fixtures and result conversion; do not rely on live vendor pages for the core contract.
 
+#### Status 
+
+Feature implemented and offline verification complete
+
+Further updates required: Y 
+
+Updates:
+- Verify the stock information is in the assumed format for Troll Trader i.e. written "# in stock" in the variant_info
+- Identify where this information lives for Magic Madhouse, currently assumed not to contain the quantity data
+
 ### 3. Make the optimizer quantity- and shipping-aware
 
 Change the optimizer input to a requirement mapping and explicit per-offer quantities. Allow copies of a card to be allocated across vendors/listings, constrain assignments by confirmed available stock, and minimize unit costs plus configured flat shipping per used vendor. Put active vendor shipping values in one editable backend configuration and label the resulting shipping as an estimate; do not claim shipping thresholds are modeled. Add a clear unavailable/infeasible result when confirmed supply cannot satisfy the requested deck.

@@ -61,7 +61,8 @@ class WebScraper(ABC):
                     price_gbp=result["price_gbp"],
                     url=result["url"],
                     vendor=result["vendor"],
-                    in_stock=result["in_stock"]
+                    in_stock=result["in_stock"],
+                    available_quantity=result.get("available_quantity")
                 )
                 offers.append(offer)
             except KeyError as e:

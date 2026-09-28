@@ -53,6 +53,7 @@ def _convert_offer_to_result(offer) -> dict:
         "card_name": offer.card_name,
         "price_gbp": offer.price_gbp,
         "in_stock": offer.in_stock,
+        "available_quantity": offer.available_quantity,
         "url": offer.url
     }
 

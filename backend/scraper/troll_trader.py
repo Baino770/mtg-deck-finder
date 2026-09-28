@@ -1,5 +1,6 @@
 import asyncio
 from dataclasses import dataclass, field
+import re
 import httpx
 from bs4 import BeautifulSoup
 
@@ -130,8 +131,16 @@ class TrollTraderScraper(WebScraper):
                 info_el = variant.select_one(".variant-short-info")
                 variant_info = info_el.get_text(strip=True) if info_el else ""
 
-                # Skip variants with 0 in stock
-                if "0 In Stock" in variant_info:
+                stock_match = re.search(
+                    r"\b(\d+)\s+in stock\b",
+                    variant_info,
+                    re.IGNORECASE,
+                )
+                available_quantity = (
+                    int(stock_match.group(1)) if stock_match else None
+                )
+
+                if available_quantity == 0:
                     continue
 
                 # Price
@@ -158,6 +167,7 @@ class TrollTraderScraper(WebScraper):
                         "card_name": full_name,
                         "price_gbp": price_gbp,
                         "in_stock": True,
+                        "available_quantity": available_quantity,
                         "url": full_url
                     })
 
